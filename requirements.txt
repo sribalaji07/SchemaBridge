@@ -1,0 +1,5 @@
+pandas
+openpyxl
+lxml
+xmltodict
+Django==5.2.5

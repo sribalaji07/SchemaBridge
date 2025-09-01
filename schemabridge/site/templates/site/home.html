@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchemaBridge - Excel to Talend XML</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Mono:wght@400;500;700&family=Google+Sans+Code:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex flex-col min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-100" style="font-family: 'Google Sans Code', 'Fira Mono', monospace;">
+
+    <!-- Navbar -->
+    <header class="bg-gradient-to-r from-indigo-600 to-purple-600 shadow-lg rounded-b-2xl">
+        <div class="container mx-auto px-8 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <a href="/" onclick="window.location.href='/'" class="focus:outline-none">
+                    <span class="text-4xl font-extrabold text-white tracking-tight drop-shadow">SchemaBridge</span>
+                </a>
+                <span class="align-top text-xs font-bold bg-gradient-to-r from-purple-400 to-indigo-500 text-white px-3 py-1 rounded-full shadow ml-1" style="letter-spacing: 1px;">Beta</span>
+            </div>
+            <nav class="flex space-x-8 text-lg">
+                <a href="#features" class="text-white hover:text-yellow-200 font-semibold transition">Features</a>
+                <a href="#instructions" class="text-white hover:text-yellow-200 font-semibold transition">Instructions</a>
+                <a href="/media/snowflakeToTalend/sample_file/schema_sample_SchemaBridge.xlsx" download="schema_sample.xlsx" class="text-yellow-200 hover:text-white font-semibold transition">Download Sample</a>
+            </nav>
+            <span class="text-yellow-100 text-base italic">Built by Sri Balaji Muruganandam</span>
+        </div>
+    </header>
+
+    <!-- Hero / Upload Section -->
+    <main class="flex-grow flex flex-col items-center justify-center px-6 py-16 text-center">
+        <h1 class="text-4xl md:text-5xl font-extrabold text-indigo-800 mb-6 drop-shadow-lg tracking-tight">
+            Convert Excel Schemas to Talend XML Effortlessly
+        </h1>
+        <p class="text-gray-700 mb-10 max-w-2xl text-lg font-medium">
+            SchemaBridge reads your Excel file containing Snowflake schemas, interprets the structure, and generates a Talend-compatible XML schema ready for your ETL pipelines.
+        </p>
+
+        <!-- Upload Form -->
+        <form method="post" enctype="multipart/form-data" class="w-full max-w-lg flex flex-col items-center" id="uploadForm">
+            {% csrf_token %}
+            <label id="uploadLabel" class="flex flex-col items-center px-8 py-10 bg-gradient-to-br from-white via-indigo-50 to-purple-100 rounded-2xl shadow-xl border-2 border-dashed border-indigo-400 cursor-pointer hover:border-indigo-600 transition w-full">
+            <svg class="w-10 h-10 text-indigo-500 mb-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 12v8m0 0l-3-3m3 3l3-3m0-5V4m0 0l-3 3m3-3l3 3"/>
+            </svg>
+            <span id="uploadText" class="text-indigo-700 font-semibold mb-2 text-lg">Click to upload your Excel or CSV file</span>
+            <span class="text-xs text-gray-500 mb-2">Supported formats: <span class="text-indigo-500 font-bold">.xlsx</span>, <span class="text-indigo-500 font-bold">.csv</span> &nbsp;|&nbsp; <span class="text-red-500 font-semibold">Max size: 5MB</span></span>
+            <input type="file" name="excel_file" accept=".xlsx,.csv" required class="hidden" id="excelFileInput" />
+            </label>
+            <button type="submit" class="mt-6 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold shadow hover:bg-indigo-700 transition" id="uploadBtn">Upload & Convert</button>
+    </form>
+        {% if debug_error %}
+    <div class="mt-6 w-full max-w-lg mx-auto bg-red-50 border border-red-300 rounded-xl shadow-md p-6 flex flex-col items-center">
+        <div class="flex items-center gap-2 mb-2">
+            <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z" />
+            </svg>
+            <span class="text-lg font-bold text-red-700">Error / Debug Info</span>
+        </div>
+        <pre class="text-sm text-red-700 whitespace-pre-wrap">{{ debug_error }}</pre>
+    </div>
+    {% endif %}
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Prevent form submit if no file selected and show error tab
+            document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            var fileInput = document.getElementById('excelFileInput');
+            var errorTab = document.getElementById('uploadErrorTab');
+            if (!fileInput.value) {
+                e.preventDefault();
+                errorTab.classList.remove('hidden');
+                return false;
+            } else {
+                errorTab.classList.add('hidden');
+            }
+            });
+
+            // Dismiss error tab
+            document.getElementById('closeErrorTab').addEventListener('click', function() {
+            document.getElementById('uploadErrorTab').classList.add('hidden');
+            });
+
+            // Show selected file name in the upload area
+            document.getElementById('excelFileInput').addEventListener('change', function(e) {
+            var uploadText = document.getElementById('uploadText');
+            if (this.files && this.files.length > 0) {
+                uploadText.textContent = `Selected File: ${this.files[0].name}`;
+                uploadText.classList.add('text-indigo-700');
+            } else {
+                uploadText.textContent = 'Click to upload your Excel or CSV file';
+                uploadText.classList.remove('text-indigo-700');
+            }
+            });
+
+            // Trigger file input click when clicking the label
+            document.getElementById('uploadLabel').addEventListener('click', function(e) {
+            if (e.target.id !== 'excelFileInput') {
+                document.getElementById('excelFileInput').click();
+            }
+            });
+        });
+        </script>
+
+        <!-- Loading Overlay with Progress Bar -->
+        <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
+            <div class="flex flex-col items-center w-full max-w-md">
+                <div class="w-full bg-gray-300 rounded-full h-8 mb-6 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-indigo-500 to-purple-500 h-8 rounded-full" style="width: 0%; transition: width 0.3s;"></div>
+                </div>
+                <div class="text-white text-2xl font-bold">Processing your file...</div>
+            </div>
+        </div>
+
+        <script>
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+            var progressBar = document.getElementById('progressBar');
+            var width = 0;
+            var interval = setInterval(function() {
+                if (width >= 100) {
+                    clearInterval(interval);
+                } else {
+                    width += 2;
+                    progressBar.style.width = width + '%';
+                }
+            }, 60); // 3 seconds total
+        });
+        window.onload = function() {
+            if (document.getElementById('loadingOverlay')) {
+                if (!document.getElementById('uploadForm')) return;
+                // If result is present, hide overlay after 3 seconds
+                {% if xml_result %}
+                setTimeout(function() {
+                    document.getElementById('loadingOverlay').classList.add('hidden');
+                }, 3000);
+                {% endif %}
+            }
+        }
+        </script>
+
+        <p class="text-gray-500 text-base mt-6 max-w-md">
+            Once uploaded, your XML schema will be generated instantly, ready to use in Talend.
+        </p>
+    </main>
+            {% if xml_result %}
+            <div class="mt-10 w-[70vw] mx-auto bg-white rounded-2xl shadow-xl p-8 border border-indigo-200 overflow-auto flex flex-col items-center">
+                <h2 class="text-xl font-bold text-indigo-700 mb-4 text-center">Generated Talend XML</h2>
+                <div class="relative w-full">
+                    <pre id="xmlContent" class="text-xs text-gray-800 whitespace-pre-wrap w-full bg-gradient-to-br from-gray-50 via-indigo-50 to-purple-50 p-6 rounded-xl border border-gray-200">{{ xml_result }}</pre>
+                    <button id="copyXmlButton" class="absolute top-2 right-2 px-3 py-1 bg-indigo-600 text-white rounded-xl text-xs font-medium shadow hover:bg-indigo-700 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 16h8M8 12h8m-8-4h8M4 6h16M4 10h16M4 14h16M4 18h16" />
+                        </svg>
+                        Copy
+                    </button>
+                </div>
+                {% if xml_download_url %}
+                <a href="{{ xml_download_url }}" download class="mt-6 px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold shadow hover:bg-indigo-700 transition text-center text-sm">Download XML</a>
+                {% endif %}
+            </div>
+            <script>
+                document.getElementById('copyXmlButton').addEventListener('click', function() {
+                    const xmlContent = document.getElementById('xmlContent').textContent;
+                    navigator.clipboard.writeText(xmlContent).catch(err => {
+                        console.error('Failed to copy text: ', err);
+                    });
+                });
+            </script>
+            {% if parsed_columns %}
+            <div class="mt-8 w-[70vw] mx-auto bg-white rounded-2xl shadow-xl p-8 border border-indigo-200">
+                <h3 class="text-xl font-bold text-indigo-700 mb-4">Parsed Columns Summary</h3>
+                {% if analysis_stats %}
+                <div class="flex flex-wrap gap-4 mb-6">
+                    <span class="inline-flex items-center px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-semibold shadow">
+                        <svg class="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v4a1 1 0 001 1h3m10 0h3a1 1 0 001-1V7a1 1 0 00-1-1h-3m-10 0H4a1 1 0 00-1 1v4m0 0V7m0 4v6a1 1 0 001 1h3m10 0h3a1 1 0 001-1v-6m0 0V7m0 4v6" /></svg>
+                        <span>Total Records: {{ analysis_stats.record_count }}</span>
+                    </span>
+                    <span class="inline-flex items-center px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-semibold shadow">
+                        <svg class="w-4 h-4 mr-2 text-purple-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v16h16V4H4zm2 2h12v12H6V6zm2 2v8h8V8H8z" /></svg>
+                        <span>File Size: {{ analysis_stats.file_size|filesizeformat }}</span>
+                    </span>
+                    <span class="inline-flex items-center px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-semibold shadow">
+                        <svg class="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v4a1 1 0 001 1h3m10 0h3a1 1 0 001-1V7a1 1 0 00-1-1h-3m-10 0H4a1 1 0 00-1 1v4m0 0V7m0 4v6a1 1 0 001 1h3m10 0h3a1 1 0 001-1v-6m0 0V7m0 4v6" /></svg>
+                        <span>File Name: {{ analysis_stats.file_name }}</span>
+                    </span>
+                    <span class="inline-flex items-center px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-semibold shadow">
+                        <svg class="w-4 h-4 mr-2 text-yellow-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="white"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01" /></svg>
+                        <span>Processed Time: {{ analysis_stats.process_time|floatformat:2 }}s</span>
+                    </span>
+                </div>
+                {% endif %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-xs text-left border border-gray-200">
+                        <thead class="bg-gradient-to-r from-indigo-100 to-purple-100">
+                            <tr>
+                                <th class="px-4 py-2 border-b">Column Name</th>
+                                <th class="px-4 py-2 border-b">Snowflake Type</th>
+                                <th class="px-4 py-2 border-b">Talend Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for col in parsed_columns %}
+                            <tr class="border-b">
+                                <td class="px-4 py-2">{{ col.Column_Name }}</td>
+                                <td class="px-4 py-2">{{ col.Column_Type }}</td>
+                                <td class="px-4 py-2">{{ col.Talend_Type }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+            {% endif %}
+            <!-- Features Section -->
+            <section id="features" class="bg-gray-50 py-16">
+                <div class="container mx-auto px-6">
+                    <h2 class="text-3xl font-bold text-indigo-800 mb-10 text-center">Features</h2>
+                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 text-center">
+                        <div class="bg-white p-8 rounded-2xl shadow-xl hover:shadow-2xl transition">
+                            <svg class="w-10 h-10 text-indigo-500 mx-auto mb-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3"/>
+                            </svg>
+                            <h3 class="font-semibold text-lg mb-2 text-indigo-700">Excel & CSV Parsing</h3>
+                            <p class="text-gray-700 text-sm">Reads and interprets your Snowflake schema from Excel or CSV files with robust validation.</p>
+                        </div>
+                        <div class="bg-white p-8 rounded-2xl shadow-xl hover:shadow-2xl transition">
+                            <svg class="w-10 h-10 text-purple-500 mx-auto mb-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3"/>
+                            </svg>
+                            <h3 class="font-semibold text-lg mb-2 text-purple-700">Talend XML Generation</h3>
+                            <p class="text-gray-700 text-sm">Automatically maps Snowflake types to Talend types and generates Talend-compatible XML schemas.</p>
+                        </div>
+                        <div class="bg-white p-8 rounded-2xl shadow-xl hover:shadow-2xl transition">
+                            <svg class="w-10 h-10 text-green-500 mx-auto mb-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <h3 class="font-semibold text-lg mb-2 text-green-700">Instant Output & Download</h3>
+                            <p class="text-gray-700 text-sm">Generates XML instantly, lets you copy or download the result, and provides a sample file for reference.</p>
+                        </div>
+                        <div class="bg-white p-8 rounded-2xl shadow-xl hover:shadow-2xl transition">
+                            <svg class="w-10 h-10 text-yellow-500 mx-auto mb-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="white"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01" />
+                            </svg>
+                            <h3 class="font-semibold text-lg mb-2 text-yellow-700">Analysis & Summary</h3>
+                            <p class="text-gray-700 text-sm">Shows parsed columns summary, record count, file size, file name, and real processing time for every upload.</p>
+                        </div>
+                        <div class="bg-white p-8 rounded-2xl shadow-xl hover:shadow-2xl transition">
+                            <svg class="w-10 h-10 text-indigo-700 mx-auto mb-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/>
+                            </svg>
+                            <h3 class="font-semibold text-lg mb-2 text-indigo-700">User-Friendly UI</h3>
+                            <p class="text-gray-700 text-sm">Modern, responsive design with error/debug tab, and clear instructions.</p>
+                        </div>
+                        <div class="bg-white p-8 rounded-2xl shadow-xl hover:shadow-2xl transition">
+                            <svg class="w-10 h-10 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01" />
+                            </svg>
+                            <h3 class="font-semibold text-lg mb-2 text-red-700">Robust Error Handling</h3>
+                            <p class="text-gray-700 text-sm">Shows clear error/debug info for upload issues, schema problems, and file size limits (max 5MB enforced).</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+    <!-- Instructions Section -->
+    <section id="instructions" class="py-20">
+        <div class="container mx-auto px-6 max-w-2xl text-center">
+            <h2 class="text-2xl font-bold text-indigo-800 mb-8">How to Use</h2>
+            <ol class="list-decimal list-inside text-gray-700 text-left space-y-4 text-base bg-gradient-to-br from-white via-indigo-50 to-purple-100 rounded-2xl shadow-xl p-8 mb-8">
+                <li>Download the sample file from the Navbar for reference.</li>
+                <li>Prepare your Excel or CSV file with the required columns and format as described below.</li>
+                <li>Click the "Upload Your Excel File" button above and select your file.</li>
+                <li>Wait for SchemaBridge to parse and generate the Talend XML schema.</li>
+                <li>Download and validate the XML in Talend for compatibility.</li>
+            </ol>
+            <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-8 text-left text-base mb-8">
+                <h3 class="text-xl font-bold text-indigo-700 mb-4">Input File Requirements</h3>
+                <ul class="list-disc list-inside mb-4 text-base">
+                    <li><span class="font-semibold">Required columns:</span> <span class="bg-indigo-100 px-2 py-1 rounded">Column_Name</span> and <span class="bg-indigo-100 px-2 py-1 rounded">Column_Type</span> (case-sensitive).</li>
+                    <li>Accepted file formats: <span class="bg-indigo-100 px-2 py-1 rounded">.xlsx</span> (Excel) or <span class="bg-indigo-100 px-2 py-1 rounded">.csv</span> (CSV).</li>
+                    <li><span class="font-semibold text-red-500">Maximum file size: 5MB</span></li>
+                    <li>Each row must have both <span class="bg-indigo-100 px-2 py-1 rounded">Column_Name</span> and <span class="bg-indigo-100 px-2 py-1 rounded">Column_Type</span> filled in.</li>
+                </ul>
+                <h4 class="text-lg font-bold text-indigo-600 mb-2">Column Details</h4>
+                <ul class="list-disc list-inside mb-4 text-base">
+                    <li><span class="font-semibold">Column_Name:</span> The name of the column as it should appear in Talend.</li>
+                    <li><span class="font-semibold">Column_Type:</span> The Snowflake data type (e.g., <span class="bg-gray-100 px-2 py-1 rounded">VARCHAR(50)</span>, <span class="bg-gray-100 px-2 py-1 rounded">NUMBER</span>, <span class="bg-gray-100 px-2 py-1 rounded">BOOLEAN</span>).</li>
+                </ul>
+                <h4 class="text-lg font-bold text-red-600 mb-2">Common Mistakes to Avoid</h4>
+                <ul class="list-disc list-inside text-red-700 mb-4 text-base">
+                    <li>Do <span class="font-bold">not</span> rename or misspell the required columns (<span class="bg-red-100 px-2 py-1 rounded">Column_Name</span>, <span class="bg-red-100 px-2 py-1 rounded">Column_Type</span>).</li>
+                    <li>Do <span class="font-bold">not</span> leave any required cell blank in a row.</li>
+                    <li>Do <span class="font-bold">not</span> use unsupported file formats (only <span class="bg-red-100 px-2 py-1 rounded">.xlsx</span> and <span class="bg-red-100 px-2 py-1 rounded">.csv</span> are allowed).</li>
+                    <li>Do <span class="font-bold">not</span> include extra header rows or merged cells.</li>
+                    <li>Do <span class="font-bold">not</span> use formulas or special characters in column names.</li>
+                </ul>
+                <h4 class="text-lg font-bold text-indigo-600 mb-2">Tips</h4>
+                <ul class="list-disc list-inside mb-2 text-base">
+                    <li>Refer to the sample file for the correct structure and formatting.</li>
+                    <li>Use plain text values for all cells.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gradient-to-r from-indigo-700 to-purple-700 text-gray-100 mt-16 dark:from-gray-900 dark:to-gray-800 dark:text-gray-300">
+        <div class="container mx-auto px-6 py-8 flex flex-col justify-center items-center gap-4">
+            <div class="text-center text-base font-bold tracking-wide text-white">Built by Sri Balaji Muruganandam </div>
+            <div class="mt-2 text-xs text-gray-200 dark:text-gray-300 text-center">
+                <span class="inline-block bg-indigo-900 bg-opacity-60 rounded-xl px-4 py-2 shadow">
+                    <span class="font-semibold">Have bugs, issues, or ideas to improve?</span>
+                    <br>
+                    Please message or email <a href="mailto:sbalajimuruganandam@resultant.com" class="underline text-indigo-200 hover:text-yellow-200 font-bold">Sri Balaji</a> - your feedback is always welcome!
+                </span>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

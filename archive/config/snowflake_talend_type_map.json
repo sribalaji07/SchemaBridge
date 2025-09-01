@@ -1,0 +1,33 @@
+{
+    "snowflake_to_talend_type": {
+        "VARCHAR": "String",
+        "CHAR": "String",
+        "TEXT": "String",
+        "STRING": "String",
+        "NUMBER": "BigDecimal",
+        "DECIMAL": "BigDecimal",
+        "NUMERIC": "BigDecimal",
+        "INT": "Integer",
+        "INTEGER": "Integer",
+        "BIGINT": "Long",
+        "SMALLINT": "Short",
+        "FLOAT": "Float",
+        "FLOAT4": "Float",
+        "FLOAT8": "Double",
+        "DOUBLE": "Double",
+        "BOOLEAN": "Boolean",
+        "DATE": "Date",
+        "TIMESTAMP": "Date",
+        "TIMESTAMP_NTZ": "Date",
+        "TIMESTAMP_LTZ": "Date",
+        "TIMESTAMP_TZ": "Date",
+        "TIME": "Date",
+        "BINARY": "byte[]",
+        "VARIANT": "Object",
+        "ARRAY": "List",
+        "OBJECT": "Object",
+        "GEOGRAPHY": "Object",
+        "DYNAMIC": "Dynamic",
+        "DOCUMENT": "Document"
+    }
+}
