@@ -23,9 +23,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-vetiut_*l_@-92-=v!3fo7-n5fkw4$)!eu$o3rrbuxd6ttb-ng'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+# Allow all hosts and explicitly add Render URL
+ALLOWED_HOSTS = ['schemabridge.onrender.com', '*']
 
 
 # Application definition
