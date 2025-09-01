@@ -118,5 +118,5 @@ def process_excel_schema(input_path, output_path=None):
 """
 This module is intended to be imported and used by other code (e.g., Django views).
 Always pass the file path of the uploaded file to process_excel_schema(input_path, output_path).
-No hardcoded file paths should be used here.
+No hardcoded file paths should be used here!
 """
