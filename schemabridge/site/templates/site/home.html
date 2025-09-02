@@ -60,7 +60,9 @@
             </svg>
             <span class="text-lg font-bold text-red-700">Error / Debug Info</span>
         </div>
-        <pre class="text-sm text-red-700 whitespace-pre-wrap">{{ debug_error }}</pre>
+        <div class="w-full overflow-auto max-h-64">
+            <pre class="text-sm text-red-700 whitespace-pre-wrap break-words">{{ debug_error }}</pre>
+        </div>
     </div>
     {% endif %} {% endcomment %}
         <script>
@@ -153,7 +155,9 @@
             </svg>
             <span class="text-lg font-bold text-red-700">Error / Debug Info</span>
         </div>
-        <pre class="text-sm text-red-700 whitespace-pre-wrap">{{ debug_error }}</pre>
+        <div class="w-full overflow-auto max-h-64">
+            <pre class="text-sm text-red-700 whitespace-pre-wrap break-words">{{ debug_error }}</pre>
+        </div>
     </div>
     {% endif %}
             {% if xml_result %}
