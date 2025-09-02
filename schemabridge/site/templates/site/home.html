@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
+{% load static %}
 <head>
+    <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SchemaBridge - Excel to Talend XML</title>
@@ -23,9 +25,8 @@
             <nav class="flex space-x-8 text-lg">
                 <a href="#features" class="text-white hover:text-yellow-200 font-semibold transition">Features</a>
                 <a href="#instructions" class="text-white hover:text-yellow-200 font-semibold transition">Instructions</a>
-                <a href="/media/snowflakeToTalend/sample_file/schema_sample_SchemaBridge.xlsx" download="schema_sample.xlsx" class="text-yellow-200 hover:text-white font-semibold transition">Download Sample</a>
+                <a href="{% static 'snowflakeToTalend/sample_file/schema_sample_SchemaBridge.xlsx' %}" download="schema_sample.xlsx" class="text-yellow-200 hover:text-white font-semibold transition">Download Sample</a>
             </nav>
-            <span class="text-yellow-100 text-base italic">Built by Sri Balaji Muruganandam</span>
         </div>
     </header>
 
@@ -51,7 +52,7 @@
             </label>
             <button type="submit" class="mt-6 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold shadow hover:bg-indigo-700 transition" id="uploadBtn">Upload & Convert</button>
     </form>
-        {% if debug_error %}
+        {% comment %} {% if debug_error %}
     <div class="mt-6 w-full max-w-lg mx-auto bg-red-50 border border-red-300 rounded-xl shadow-md p-6 flex flex-col items-center">
         <div class="flex items-center gap-2 mb-2">
             <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -61,7 +62,7 @@
         </div>
         <pre class="text-sm text-red-700 whitespace-pre-wrap">{{ debug_error }}</pre>
     </div>
-    {% endif %}
+    {% endif %} {% endcomment %}
         <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Prevent form submit if no file selected and show error tab
@@ -144,6 +145,17 @@
             Once uploaded, your XML schema will be generated instantly, ready to use in Talend.
         </p>
     </main>
+    {% if debug_error %}
+    <div class="mt-6 w-full max-w-lg mx-auto bg-red-50 border border-red-300 rounded-xl shadow-md p-6 flex flex-col items-center">
+        <div class="flex items-center gap-2 mb-2">
+            <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z" />
+            </svg>
+            <span class="text-lg font-bold text-red-700">Error / Debug Info</span>
+        </div>
+        <pre class="text-sm text-red-700 whitespace-pre-wrap">{{ debug_error }}</pre>
+    </div>
+    {% endif %}
             {% if xml_result %}
             <div class="mt-10 w-[70vw] mx-auto bg-white rounded-2xl shadow-xl p-8 border border-indigo-200 overflow-auto flex flex-col items-center">
                 <h2 class="text-xl font-bold text-indigo-700 mb-4 text-center">Generated Talend XML</h2>
