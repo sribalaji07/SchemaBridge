@@ -1,7 +1,8 @@
 import pandas as pd
-
 import sys
+from django.conf import settings
 import os
+from pathlib import Path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from config import snowflake_to_talend_type
@@ -97,21 +98,45 @@ def generate_xml(df, log_list=None):
     log_list.append(f"[INFO] XML generation complete. {len(df)} columns processed.")
     return '<?xml version="1.0" encoding="UTF-8"?>\n' + '\n'.join(pretty_xml.splitlines()[1:]), log_list
 
+# def process_excel_schema(input_path, output_path=None):
+#     log_list = []
+#     log_list.append(f"[INFO] Starting schema processing for: {input_path}")
+#     df, log_list = read_schema(input_path, log_list)
+#     if df is None:
+#         log_list.append(f"[ERROR] Schema processing failed for: {input_path}")
+#         return None, log_list
+#     xml_content, log_list = generate_xml(df, log_list)
+#     if output_path:
+#         try:
+#             with open(output_path, 'w', encoding='utf-8') as f:
+#                 f.write(xml_content)
+#             log_list.append(f"[INFO] XML written to: {output_path}")
+#         except Exception as e:
+#             log_list.append(f"[ERROR] Failed to write XML to file: {e}")
+#     log_list.append(f"[INFO] Schema processing complete for: {input_path}")
+#     return xml_content, log_list
+
 def process_excel_schema(input_path, output_path=None):
     log_list = []
     log_list.append(f"[INFO] Starting schema processing for: {input_path}")
+
     df, log_list = read_schema(input_path, log_list)
     if df is None:
         log_list.append(f"[ERROR] Schema processing failed for: {input_path}")
         return None, log_list
+
     xml_content, log_list = generate_xml(df, log_list)
+
     if output_path:
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)  # ensure folder exists
         try:
             with open(output_path, 'w', encoding='utf-8') as f:
                 f.write(xml_content)
             log_list.append(f"[INFO] XML written to: {output_path}")
         except Exception as e:
             log_list.append(f"[ERROR] Failed to write XML to file: {e}")
+
     log_list.append(f"[INFO] Schema processing complete for: {input_path}")
     return xml_content, log_list
 

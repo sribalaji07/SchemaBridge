@@ -144,16 +144,16 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 60); // 3 seconds total
         });
         window.onload = function() {
-            if (document.getElementById('loadingOverlay')) {
-                if (!document.getElementById('uploadForm')) return;
-                // If result is present, hide overlay after 3 seconds
-                {% if xml_result %}
-                setTimeout(function() {
-                    document.getElementById('loadingOverlay').classList.add('hidden');
-                }, 3000);
-                {% endif %}
-            }
-        }
+    {% if xml_result %}
+    // Hide overlay after 3 seconds
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        setTimeout(function() {
+            overlay.classList.add('hidden');
+        }, 3000);
+    }
+    {% endif %}
+}
         </script>
 
         <p class="text-gray-500 text-base mt-6 max-w-md">
